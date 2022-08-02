@@ -38,8 +38,8 @@ def parse_args():
     parser.add_argument('--ssl',   action ='store', dest='ssl',       help="Use HTTPS without verification", nargs='?', const=True)
     parser.add_argument('--level', action ='store', dest='level',     help="Level of test to perform (1-5, default: 1)", nargs='?', const=1, default=1, type=int)
     results = parser.parse_args()
-    
-    if results.reqfile == None:
+
+    if results.reqfile is None:
         parser.print_help()
         exit()
 

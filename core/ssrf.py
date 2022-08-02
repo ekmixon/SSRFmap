@@ -16,23 +16,22 @@ class SSRF(object):
         self.load_modules()
 
         # Start a reverse shell handler
-        if args.handler and args.lport and args.handler == "1":
-            handler = Handler(args.lport)
+        if args.handler and args.lport:
+            if args.handler == "1":
+                handler = Handler(args.lport)
+            else:
+                self.load_handler(args.handler)
+                handler = self.handler.exploit(args.lport)
             handler.start()
-        elif args.handler and args.lport:
-            self.load_handler(args.handler)
-            handler = self.handler.exploit(args.lport)
-            handler.start()
-
         # Init a requester
         self.requester = Requester(args.reqfile, args.useragent, args.ssl)
 
         # NOTE: if args.param == None, target everything
-        if args.param == None:
+        if args.param is None:
             logging.warning("No parameter (-p) defined, nothing will be tested!")
 
         # NOTE: if args.modules == None, try everything
-        if args.modules == None:
+        if args.modules is None:
             logging.warning("No modules (-m) defined, everything will be tested!")
             for module in self.modules:
                 module.exploit(self.requester, args)
@@ -49,17 +48,17 @@ class SSRF(object):
             time.sleep(5)
 
     def load_modules(self):
-        for index,name in enumerate(os.listdir("./modules")):
+        for name in os.listdir("./modules"):
             location = os.path.join("./modules", name)
             if ".py" in location:
                 mymodule = SourceFileLoader(name, location).load_module()
                 self.modules.add(mymodule)
 
     def load_handler(self, name):
-        handler_file = "{}.py".format(name)
+        handler_file = f"{name}.py"
         try:
             location = os.path.join("./handlers", handler_file)
             self.handler = SourceFileLoader(handler_file, location).load_module()
         except Exception as e:
-            logging.error("Invalid no such handler: {}".format(name))
+            logging.error(f"Invalid no such handler: {name}")
             exit(1)

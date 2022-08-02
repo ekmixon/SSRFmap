@@ -3,32 +3,28 @@ import struct
 import string
 
 def wrapper_file(data):
-    return "file://{}".format(data)
+    return f"file://{data}"
 
 def wrapper_unc(data, ip):
-    return "\\\\{}\\{}".format(ip, data)
+    return f"\\\\{ip}\\{data}"
     
 def wrapper_gopher(data, ip, port):
-    return "gopher://{}:{}/_{}".format(ip, port, data)
+    return f"gopher://{ip}:{port}/_{data}"
 
 def wrapper_dict(data, ip, port):
-    return "dict://{}:{}/{}".format(ip, port, data)
+    return f"dict://{ip}:{port}/{data}"
 
 def wrapper_http(data, ip, port, usernm=False, passwd=False):
     if usernm != False and passwd != False:
-        return "http://{}:{}@{}:{}/{}".format(usernm, passwd, ip, port, data)
-    return "http://{}:{}/{}".format(ip, port, data)
+        return f"http://{usernm}:{passwd}@{ip}:{port}/{data}"
+    return f"http://{ip}:{port}/{data}"
 
 def wrapper_https(data, ip, port):
-    return "https://{}:{}/{}".format(ip, port, data)
+    return f"https://{ip}:{port}/{data}"
 
 
 def diff_text(text1, text2):
-    diff = ""
-    for line in text1.split("\n"):
-        if not line in text2:
-            diff += line + "\n"
-    return diff
+    return "".join(line + "\n" for line in text1.split("\n") if line not in text2)
 
 def ip_default_local(ips, ip):
     ips.add("127.0.0.1")
@@ -69,7 +65,7 @@ def ip_dotless_decimal(ips, ip):
         return int(ip_part) * (256 ** octet)
 
     try:
-        parts = [part for part in ip.split(".")]
+        parts = list(ip.split("."))
         ips.add(str(octet_to_decimal_part(parts[0], 3) + octet_to_decimal_part(parts[1], 2) + octet_to_decimal_part(parts[2], 1) + octet_to_decimal_part(parts[3], 0)))
     except:
         pass
@@ -77,7 +73,7 @@ def ip_dotless_decimal(ips, ip):
 
 def ip_dotted_hexadecimal(ips, ip):
     def octet_to_hex_part(number):
-            return str(hex(int(number)))
+        return hex(int(number))
 
     try:
         ips.add(".".join([octet_to_hex_part(part) for part in ip.split(".")]))
@@ -87,7 +83,7 @@ def ip_dotted_hexadecimal(ips, ip):
 
 def ip_dotted_octal(ips, ip):
     def octet_to_oct_part(number):
-            return str(oct(int(number))).replace("o","")
+        return oct(int(number)).replace("o", "")
 
     try:
         ips.add(".".join([octet_to_oct_part(part) for part in ip.split(".")]))
@@ -101,7 +97,7 @@ def ip_dotless_decimal_with_overflow(ips, ip):
         return int(ip_part) * (256 ** octet)
 
     try:
-        parts = [part for part in ip.split(".")]
+        parts = list(ip.split("."))
         ips.add(str(octet_to_decimal_part(parts[0], 3) + octet_to_decimal_part(parts[1], 2) + octet_to_decimal_part(parts[2], 1) + octet_to_decimal_part(parts[3], 0)))
     except:
         pass
@@ -157,5 +153,4 @@ def gen_ip_list(ip, level):
         ip_dotted_hexadecimal(ips, ip)
         ip_dotted_octal(ips, ip)
 
-    for ip in ips:
-        yield ip
+    yield from ips

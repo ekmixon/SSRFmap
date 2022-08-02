@@ -13,7 +13,7 @@ class exploit():
     ips = set()
 
     def __init__(self, requester, args):
-        logging.info("Module '{}' launched !".format(name))
+        logging.info(f"Module '{name}' launched !")
 
         # concurrent requests in order to limit the time
         self.add_range("192.168.1.0/24")  # Default network 
@@ -22,7 +22,7 @@ class exploit():
         # Uncomment these lines if you need to scan more networks
         # self.add_range("172.17.0.0/16")   # Docker network
         # self.add_range("172.18.0.0/16")   # Docker network
-        
+
 
 
         r = requester.do_request(args.param, "")
@@ -47,11 +47,11 @@ class exploit():
         try:
             payload = wrapper_http("", host, port.strip())
             r = requester.do_request(param, payload)
-        
-            if (not "Connection refused" in r.text) and (r.text != compare.text):
-                timer = datetime.today().time().replace(microsecond=0)
-                print("\t[{}] Found host :{}".format(timer, host+ " "*40))
 
-            timer = datetime.today().time().replace(microsecond=0)
+            if "Connection refused" not in r.text and r.text != compare.text:
+                timer = datetime.now().time().replace(microsecond=0)
+                print(f'\t[{timer}] Found host :{host + " "*40}')
+
+            timer = datetime.now().time().replace(microsecond=0)
         except Exception as e:
             pass

